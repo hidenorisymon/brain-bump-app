@@ -1,8 +1,6 @@
 const SUPABASE_URL = 'https://samuwgxtsgbkyybbfurf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhbXV3Z3h0c2dia3l5YmJmdXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MjIyNzQsImV4cCI6MjA5NDE5ODI3NH0.rrAE1nzKMEKIqCqaps__qb7i8WuLuXWu8n9wE1OWkFo';
 
-console.clear = function() {};
-
 (function () {
   'use strict';
 
@@ -17,13 +15,11 @@ console.clear = function() {};
   async function getStatus(session) {
     if (!session) return null;
     try {
-      console.log('[SA] fetching profile...');
       const resp = await fetch(
         SUPABASE_URL + '/rest/v1/profiles?select=status&id=eq.' + session.user.id + '&limit=1',
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + session.access_token } }
       );
       const data = await resp.json();
-      console.log('[SA] profile data:', JSON.stringify(data));
       if (!Array.isArray(data) || data.length === 0) return null;
       return data[0].status;
     } catch(e) {
@@ -63,15 +59,12 @@ console.clear = function() {};
   }
 
   client.auth.onAuthStateChange(async (event, session) => {
-    console.log('[SA] authStateChange:', event, session ? session.user.email : 'null');
     _state.session = session;
     _state.status = await getStatus(session);
-    console.log('[SA] status:', _state.status);
     _notify(event, session, _state.status);
   });
 
   (async function init() {
-    console.log('[SA] init, hash:', window.location.hash ? 'present' : 'empty');
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
       const p = new URLSearchParams(hash.substring(1));
@@ -79,7 +72,6 @@ console.clear = function() {};
       const rt = p.get('refresh_token');
       if (at && rt) {
         const { data, error } = await client.auth.setSession({ access_token: at, refresh_token: rt });
-        console.log('[SA] setSession:', error ? error.message : 'ok');
         if (!error && data.session) {
           _state.session = data.session;
           _state.status = await getStatus(data.session);
@@ -92,11 +84,9 @@ console.clear = function() {};
       _state.session = session;
       _state.status = await getStatus(session);
     }
-    console.log('[SA] ready. session:', _state.session ? _state.session.user.email : 'none', 'status:', _state.status);
     _state.ready = true;
     _notify('INITIAL', _state.session, _state.status);
   })();
 
   window.SupabaseAuth = { signInWithGoogle, signOut, getSession, getStatus, onAuthStateChange, _state };
-  console.log('[SA] module loaded.');
 })();
